@@ -33,6 +33,7 @@ public class Experiment {
 		Arrays.fill(wealth, 100);
 		boolean[] hasMoney = new boolean[n];
 		for (int i = 0; i < t; i++) {
+			// 在每个for循环中进行初始化，验证每一轮每个人是否还有足够的财富
 			Arrays.fill(hasMoney, false);
 			for (int j = 0; j < n; j++) {
 				if (wealth[j] > 0) {
@@ -41,6 +42,7 @@ public class Experiment {
 			}
 			for (int j = 0; j < n; j++) {
 				if (hasMoney[j]) {
+					// 这里等于任何数值都可以。
 					int other = j;
 					do {
 						// (int) (Math.random() * n);
