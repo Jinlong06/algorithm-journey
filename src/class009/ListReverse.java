@@ -80,9 +80,14 @@ public class ListReverse {
 			ListNode pre = null;
 			ListNode next = null;
 			while (head != null) {
+				// 指针修改的顺序很重要，否则容易出现某个变量找不到引用，从而算法失败
+				// 1. 先找好下家
 				next = head.next;
+				// 2. 提出离职,前公司就是反转后的下一家
 				head.next = pre;
+				// 3. 工作交接，将原对象给上家公司(pre)
 				pre = head;
+				// 4. 直接跳到下家。下家已经找好，如果未赋值。则head为空(空窗期，很惨)
 				head = next;
 			}
 			return pre;
@@ -110,6 +115,8 @@ public class ListReverse {
 		while (head != null) {
 			next = head.next;
 			head.next = pre;
+			// 多了一个将指向前一个节点的last指针进行赋值。赋值过程如果不清楚，可以先画图
+			// 然后对last指针进行规划
 			head.last = next;
 			pre = head;
 			head = next;
