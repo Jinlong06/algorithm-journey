@@ -1,6 +1,13 @@
 package class185;
 
 // 震波，C++版
+// 树上有n个点，每个点有点权，给定n-1条边，边权都是1
+// 接下来有m条操作，每条操作是如下两种类型中的一种
+// 操作 0 x y : 点x出发，距离<=y的所有点，打印点权累加和
+// 操作 1 x y : 点x的点权变成y
+// 1 <= n、m <= 10^5
+// 1 <= 点权 <= 10^4
+// 本题要求强制在线，得到操作参数的规则，打开测试链接查看
 // 测试链接 : https://www.luogu.com.cn/problem/P6329
 // 如下实现是C++的版本，C++版本和java版本逻辑完全一样
 // 提交如下代码，可以通过所有测试用例
@@ -10,7 +17,6 @@ package class185;
 //using namespace std;
 //
 //const int MAXN = 100001;
-//const int MAXH = 18;
 //const int MAXT = 10000001;
 //int n, m;
 //int arr[MAXN];
@@ -77,17 +83,6 @@ package class185;
 //    }
 //}
 //
-//void getSize(int u, int fa) {
-//    siz[u] = 1;
-//    for (int e = head[u]; e; e = nxt[e]) {
-//        int v = to[e];
-//        if (v != fa && !vis[v]) {
-//            getSize(v, u);
-//            siz[u] += siz[v];
-//        }
-//    }
-//}
-//
 //int getLca(int a, int b) {
 //    while (top[a] != top[b]) {
 //        if (dep[top[a]] <= dep[top[b]]) {
@@ -101,6 +96,17 @@ package class185;
 //
 //int getDist(int x, int y) {
 //    return dep[x] + dep[y] - (dep[getLca(x, y)] << 1);
+//}
+//
+//void getSize(int u, int fa) {
+//    siz[u] = 1;
+//    for (int e = head[u]; e; e = nxt[e]) {
+//        int v = to[e];
+//        if (v != fa && !vis[v]) {
+//            getSize(v, u);
+//            siz[u] += siz[v];
+//        }
+//    }
 //}
 //
 //int getCentroid(int u, int fa) {
@@ -170,31 +176,22 @@ package class185;
 //}
 //
 //void add(int x, int v) {
-//    int cur = x, pre = 0, dist;
-//    while (cur > 0) {
-//        dist = getDist(cur, x);
-//        addTree[cur] = add(dist, v, 0, n - 1, addTree[cur]);
-//        if (pre > 0) {
-//            minusTree[pre] = add(dist, v, 0, n - 1, minusTree[pre]);
-//        }
-//        pre = cur;
-//        cur = centfa[cur];
+//    addTree[x] = add(0, v, 0, n - 1, addTree[x]);
+//    for (int cur = x, fa = centfa[cur]; fa > 0; cur = fa, fa = centfa[cur]) {
+//        int dist = getDist(x, fa);
+//        addTree[fa] = add(dist, v, 0, n - 1, addTree[fa]);
+//        minusTree[cur] = add(dist, v, 0, n - 1, minusTree[cur]);
 //    }
 //}
 //
 //int query(int x, int k) {
-//    int ans = 0;
-//    int cur = x, pre = 0, dist;
-//    while (cur > 0) {
-//        dist = getDist(cur, x);
+//    int ans = query(0, k, 0, n - 1, addTree[x]);
+//    for (int cur = x, fa = centfa[cur]; fa > 0; cur = fa, fa = centfa[cur]) {
+//        int dist = getDist(x, fa);
 //        if (k - dist >= 0) {
-//            ans += query(0, k - dist, 0, n - 1, addTree[cur]);
-//            if (pre > 0) {
-//                ans -= query(0, k - dist, 0, n - 1, minusTree[pre]);
-//            }
+//            ans += query(0, k - dist, 0, n - 1, addTree[fa]);
+//            ans -= query(0, k - dist, 0, n - 1, minusTree[cur]);
 //        }
-//        pre = cur;
-//        cur = centfa[cur];
 //    }
 //    return ans;
 //}

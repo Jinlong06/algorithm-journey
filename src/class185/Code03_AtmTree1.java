@@ -1,6 +1,13 @@
 package class185;
 
 // Atm的树，java版
+// 树上有n个点，给定n-1条边，每条边有边权
+// 现在关心，从节点x出发到达其他点的距离中，第k小的距离
+// 注意，节点x到自己的距离0，不参与距离评比
+// 给定正数k，打印每个节点的第k小距离，一共n条打印
+// 1 <= n <= 15000
+// 1 <= k <= 5000
+// 1 <= 边权 <= 10
 // 测试链接 : https://www.luogu.com.cn/problem/P10604
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
@@ -60,17 +67,6 @@ public class Code03_AtmTree1 {
 		}
 	}
 
-	public static void getSize(int u, int fa) {
-		siz[u] = 1;
-		for (int e = head[u]; e > 0; e = nxt[e]) {
-			int v = to[e];
-			if (v != fa && !vis[v]) {
-				getSize(v, u);
-				siz[u] += siz[v];
-			}
-		}
-	}
-
 	public static int getLca(int a, int b) {
 		if (dep[a] < dep[b]) {
 			int tmp = a;
@@ -96,6 +92,17 @@ public class Code03_AtmTree1 {
 
 	public static int getDist(int x, int y) {
 		return dist[x] + dist[y] - (dist[getLca(x, y)] << 1);
+	}
+
+	public static void getSize(int u, int fa) {
+		siz[u] = 1;
+		for (int e = head[u]; e > 0; e = nxt[e]) {
+			int v = to[e];
+			if (v != fa && !vis[v]) {
+				getSize(v, u);
+				siz[u] += siz[v];
+			}
+		}
 	}
 
 	public static int getCentroid(int u, int fa) {
@@ -128,18 +135,18 @@ public class Code03_AtmTree1 {
 		}
 	}
 
-	public static int add(int jobi, int l, int r, int i) {
+	public static int add(int jobi, int jobv, int l, int r, int i) {
 		if (i == 0) {
 			i = ++cntt;
 		}
 		if (l == r) {
-			sum[i]++;
+			sum[i] += jobv;
 		} else {
 			int mid = (l + r) >> 1;
 			if (jobi <= mid) {
-				ls[i] = add(jobi, l, mid, ls[i]);
+				ls[i] = add(jobi, jobv, l, mid, ls[i]);
 			} else {
-				rs[i] = add(jobi, mid + 1, r, rs[i]);
+				rs[i] = add(jobi, jobv, mid + 1, r, rs[i]);
 			}
 			sum[i] = sum[ls[i]] + sum[rs[i]];
 		}
@@ -164,32 +171,23 @@ public class Code03_AtmTree1 {
 		return ans;
 	}
 
-	public static void add(int x) {
-		int cur = x, pre = 0, distance;
-		while (cur > 0) {
-			distance = getDist(cur, x);
-			addTree[cur] = add(distance, 0, sumw, addTree[cur]);
-			if (pre > 0) {
-				minusTree[pre] = add(distance, 0, sumw, minusTree[pre]);
-			}
-			pre = cur;
-			cur = centfa[cur];
+	public static void add(int x, int v) {
+		addTree[x] = add(0, v, 0, sumw, addTree[x]);
+		for (int cur = x, fa = centfa[cur]; fa > 0; cur = fa, fa = centfa[cur]) {
+			int dist = getDist(x, fa);
+			addTree[fa] = add(dist, v, 0, sumw, addTree[fa]);
+			minusTree[cur] = add(dist, v, 0, sumw, minusTree[cur]);
 		}
 	}
 
 	public static int query(int x, int limit) {
-		int ans = 0;
-		int cur = x, pre = 0, distance;
-		while (cur > 0) {
-			distance = getDist(cur, x);
-			if (limit - distance >= 0) {
-				ans += query(0, limit - distance, 0, sumw, addTree[cur]);
-				if (pre > 0) {
-					ans -= query(0, limit - distance, 0, sumw, minusTree[pre]);
-				}
+		int ans = query(0, limit, 0, sumw, addTree[x]);
+		for (int cur = x, fa = centfa[cur]; fa > 0; cur = fa, fa = centfa[cur]) {
+			int dist = getDist(x, fa);
+			if (limit - dist >= 0) {
+				ans += query(0, limit - dist, 0, sumw, addTree[fa]);
+				ans -= query(0, limit - dist, 0, sumw, minusTree[cur]);
 			}
-			pre = cur;
-			cur = centfa[cur];
 		}
 		return ans;
 	}
@@ -225,7 +223,7 @@ public class Code03_AtmTree1 {
 		dfs(1, 0, 0);
 		centroidTree(getCentroid(1, 0), 0);
 		for (int i = 1; i <= n; i++) {
-			add(i);
+			add(i, 1);
 		}
 		for (int i = 1; i <= n; i++) {
 			out.println(compute(i));

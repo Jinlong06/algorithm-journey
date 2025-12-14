@@ -1,6 +1,12 @@
 package class185;
 
 // 烁烁的游戏，C++版
+// 树上有n个点，每个点的初始点权是0，给定n-1条边，边权都是1
+// 接下来有m条操作，每条操作是如下两种类型中的一种
+// 操作 M x k v : 点x出发，距离<=k的所有点，点权都加上v
+// 操作 Q x     : 打印点x的点权
+// 1 <= n、m <= 10^5
+// -10000 <= v <= +10000
 // 测试链接 : https://www.luogu.com.cn/problem/P10603
 // 如下实现是C++的版本，C++版本和java版本逻辑完全一样
 // 提交如下代码，可以通过所有测试用例
@@ -53,17 +59,6 @@ package class185;
 //    }
 //}
 //
-//void getSize(int u, int fa) {
-//    siz[u] = 1;
-//    for (int e = head[u]; e; e = nxt[e]) {
-//        int v = to[e];
-//        if (v != fa && !vis[v]) {
-//            getSize(v, u);
-//            siz[u] += siz[v];
-//        }
-//    }
-//}
-//
 //int getLca(int a, int b) {
 //    if (dep[a] < dep[b]) {
 //        swap(a, b);
@@ -87,6 +82,17 @@ package class185;
 //
 //int getDist(int x, int y) {
 //    return dep[x] + dep[y] - (dep[getLca(x, y)] << 1);
+//}
+//
+//void getSize(int u, int fa) {
+//    siz[u] = 1;
+//    for (int e = head[u]; e; e = nxt[e]) {
+//        int v = to[e];
+//        if (v != fa && !vis[v]) {
+//            getSize(v, u);
+//            siz[u] += siz[v];
+//        }
+//    }
 //}
 //
 //int getCentroid(int u, int fa) {
@@ -156,31 +162,22 @@ package class185;
 //}
 //
 //void add(int x, int k, int v) {
-//    int cur = x, pre = 0, dist;
-//    while (cur > 0) {
-//        dist = getDist(cur, x);
+//    addTree[x] = add(k, v, 0, n - 1, addTree[x]);
+//    for (int cur = x, fa = centfa[cur]; fa > 0; cur = fa, fa = centfa[cur]) {
+//        int dist = getDist(x, fa);
 //        if (k - dist >= 0) {
-//            addTree[cur] = add(k - dist, v, 0, n - 1, addTree[cur]);
-//            if (pre > 0) {
-//                minusTree[pre] = add(k - dist, v, 0, n - 1, minusTree[pre]);
-//            }
+//            addTree[fa] = add(k - dist, v, 0, n - 1, addTree[fa]);
+//            minusTree[cur] = add(k - dist, v, 0, n - 1, minusTree[cur]);
 //        }
-//        pre = cur;
-//        cur = centfa[cur];
 //    }
 //}
 //
 //int query(int x) {
-//    int ans = 0;
-//    int cur = x, pre = 0, dist;
-//    while (cur > 0) {
-//        dist = getDist(cur, x);
-//        ans += query(dist, n - 1, 0, n - 1, addTree[cur]);
-//        if (pre > 0) {
-//            ans -= query(dist, n - 1, 0, n - 1, minusTree[pre]);
-//        }
-//        pre = cur;
-//        cur = centfa[cur];
+//    int ans = query(0, n - 1, 0, n - 1, addTree[x]);
+//    for (int cur = x, fa = centfa[cur]; fa > 0; cur = fa, fa = centfa[cur]) {
+//        int dist = getDist(x, fa);
+//        ans += query(dist, n - 1, 0, n - 1, addTree[fa]);
+//        ans -= query(dist, n - 1, 0, n - 1, minusTree[cur]);
 //    }
 //    return ans;
 //}

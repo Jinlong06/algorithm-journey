@@ -1,14 +1,15 @@
 package class185;
 
-// 震波，java版
-// 树上有n个点，每个点有点权，给定n-1条边，边权都是1
-// 接下来有m条操作，每条操作是如下两种类型中的一种
-// 操作 0 x y : 点x出发，距离<=y的所有点，打印点权累加和
-// 操作 1 x y : 点x的点权变成y
+// 幻想乡战略游戏，java版
+// 树上有n个点，每个点的初始点权是0，给定n-1条边，每条边有边权
+// 如果点x是指挥点，它指挥点y的花费 = x到y的简单路径权值和 * y的点权
+// 树上存在某个最佳的指挥点，指挥所有点的总花费最小，叫做最小指挥总花费
+// 一共m条操作，格式 x v : 先把x的点权增加v，然后打印此时的最小指挥总花费
+// 注意参数v有可能是负数，但题目保证任何时候，点权不会出现负数
 // 1 <= n、m <= 10^5
-// 1 <= 点权 <= 10^4
-// 本题要求强制在线，得到操作参数的规则，打开测试链接查看
-// 测试链接 : https://www.luogu.com.cn/problem/P6329
+// 1 <= 边权 <= 1000
+// -1000 <= v <= +1000
+// 测试链接 : https://www.luogu.com.cn/problem/P3345
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
 
 import java.io.IOException;
@@ -16,16 +17,16 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
-public class Code01_Wave1 {
+public class Code04_Fantasy1 {
 
 	public static int MAXN = 100001;
-	public static int MAXT = 10000001;
 	public static int n, m;
-	public static int[] arr = new int[MAXN];
 
 	public static int[] head = new int[MAXN];
 	public static int[] nxt = new int[MAXN << 1];
 	public static int[] to = new int[MAXN << 1];
+	public static int[] weight = new int[MAXN << 1];
+	public static int[] cent = new int[MAXN << 1];
 	public static int cntg;
 
 	public static int[] fa = new int[MAXN];
@@ -33,27 +34,26 @@ public class Code01_Wave1 {
 	public static int[] siz = new int[MAXN];
 	public static int[] son = new int[MAXN];
 	public static int[] top = new int[MAXN];
+	public static int[] dist = new int[MAXN];
 
 	public static boolean[] vis = new boolean[MAXN];
 	public static int[] centfa = new int[MAXN];
 
-	public static int[] addTree = new int[MAXN];
-	public static int[] minusTree = new int[MAXN];
-	public static int[] ls = new int[MAXT];
-	public static int[] rs = new int[MAXT];
-	public static int[] sum = new int[MAXT];
-	public static int cntt;
+	public static long[] sum = new long[MAXN];
+	public static long[] addCost = new long[MAXN];
+	public static long[] minusCost = new long[MAXN];
 
 	// 讲解118，递归函数改成迭代所需要的栈
-	public static int[][] stack = new int[MAXN][4];
-	public static int u, f, t, e;
+	public static int[][] stack = new int[MAXN][5];
+	public static int u, f, a, b, e;
 	public static int stacksize;
 
-	public static void push(int u, int f, int t, int e) {
+	public static void push(int u, int f, int a, int b, int e) {
 		stack[stacksize][0] = u;
 		stack[stacksize][1] = f;
-		stack[stacksize][2] = t;
-		stack[stacksize][3] = e;
+		stack[stacksize][2] = a;
+		stack[stacksize][3] = b;
+		stack[stacksize][4] = e;
 		stacksize++;
 	}
 
@@ -61,25 +61,28 @@ public class Code01_Wave1 {
 		--stacksize;
 		u = stack[stacksize][0];
 		f = stack[stacksize][1];
-		t = stack[stacksize][2];
-		e = stack[stacksize][3];
+		a = stack[stacksize][2];
+		b = stack[stacksize][3];
+		e = stack[stacksize][4];
 	}
 
-	public static void addEdge(int u, int v) {
+	public static void addEdge(int u, int v, int w) {
 		nxt[++cntg] = head[u];
 		to[cntg] = v;
+		weight[cntg] = w;
 		head[u] = cntg;
 	}
 
-	// 重链剖分收集信息递归版，java会爆栈，C++不会
-	public static void dfs1(int u, int f) {
+	public static void dfs1(int u, int f, int dis) {
 		fa[u] = f;
 		dep[u] = dep[f] + 1;
+		dist[u] = dis;
 		siz[u] = 1;
-		for (int e = head[u], v; e > 0; e = nxt[e]) {
-			v = to[e];
+		for (int e = head[u]; e > 0; e = nxt[e]) {
+			int v = to[e];
+			int w = weight[e];
 			if (v != f) {
-				dfs1(v, u);
+				dfs1(v, u, dis + w);
 			}
 		}
 		for (int ei = head[u], v; ei > 0; ei = nxt[ei]) {
@@ -93,7 +96,6 @@ public class Code01_Wave1 {
 		}
 	}
 
-	// 根据重儿子剖分的递归版，java会爆栈，C++不会
 	public static void dfs2(int u, int t) {
 		top[u] = t;
 		if (son[u] == 0) {
@@ -108,25 +110,26 @@ public class Code01_Wave1 {
 		}
 	}
 
-	// dfs1改成迭代版
-	public static void dfs3(int cur, int father) {
+	public static void dfs3(int cur, int father, int distance) {
 		stacksize = 0;
-		push(cur, father, 0, -1);
+		push(cur, father, distance, 0, -1);
 		while (stacksize > 0) {
 			pop();
 			if (e == -1) {
 				fa[u] = f;
 				dep[u] = dep[f] + 1;
+				dist[u] = a;
 				siz[u] = 1;
 				e = head[u];
 			} else {
 				e = nxt[e];
 			}
 			if (e != 0) {
-				push(u, f, 0, e);
+				push(u, f, a, 0, e);
 				int v = to[e];
+				int w = weight[e];
 				if (v != f) {
-					push(v, u, 0, -1);
+					push(v, u, a + w, 0, -1);
 				}
 			} else {
 				for (int ei = head[u]; ei > 0; ei = nxt[ei]) {
@@ -142,19 +145,18 @@ public class Code01_Wave1 {
 		}
 	}
 
-	// dfs2改成迭代版
 	public static void dfs4(int cur, int tag) {
 		stacksize = 0;
-		push(cur, 0, tag, -1);
+		push(cur, 0, 0, tag, -1);
 		while (stacksize > 0) {
 			pop();
 			if (e == -1) {
-				top[u] = t;
+				top[u] = b;
 				if (son[u] == 0) {
 					continue;
 				}
-				push(u, 0, t, -2);
-				push(son[u], 0, t, -1);
+				push(u, 0, 0, b, -2);
+				push(son[u], 0, 0, b, -1);
 				continue;
 			} else if (e == -2) {
 				e = head[u];
@@ -162,10 +164,10 @@ public class Code01_Wave1 {
 				e = nxt[e];
 			}
 			if (e != 0) {
-				push(u, 0, t, e);
+				push(u, 0, 0, b, e);
 				int v = to[e];
 				if (v != fa[u] && v != son[u]) {
-					push(v, 0, v, -1);
+					push(v, 0, 0, v, -1);
 				}
 			}
 		}
@@ -183,10 +185,9 @@ public class Code01_Wave1 {
 	}
 
 	public static int getDist(int x, int y) {
-		return dep[x] + dep[y] - (dep[getLca(x, y)] << 1);
+		return dist[x] + dist[y] - (dist[getLca(x, y)] << 1);
 	}
 
-	// 找重心需要计算子树大小的递归版，java会爆栈，C++不会
 	public static void getSize1(int u, int fa) {
 		siz[u] = 1;
 		for (int e = head[u]; e > 0; e = nxt[e]) {
@@ -198,10 +199,9 @@ public class Code01_Wave1 {
 		}
 	}
 
-	// getSize1的迭代版
 	public static void getSize2(int cur, int fa) {
 		stacksize = 0;
-		push(cur, fa, 0, -1);
+		push(cur, fa, 0, 0, -1);
 		while (stacksize > 0) {
 			pop();
 			if (e == -1) {
@@ -211,10 +211,10 @@ public class Code01_Wave1 {
 				e = nxt[e];
 			}
 			if (e != 0) {
-				push(u, f, 0, e);
+				push(u, f, 0, 0, e);
 				int v = to[e];
 				if (v != f && !vis[v]) {
-					push(v, u, 0, -1);
+					push(v, u, 0, 0, -1);
 				}
 			} else {
 				for (int ei = head[u]; ei > 0; ei = nxt[ei]) {
@@ -253,63 +253,40 @@ public class Code01_Wave1 {
 		for (int e = head[u]; e > 0; e = nxt[e]) {
 			int v = to[e];
 			if (!vis[v]) {
-				centroidTree(getCentroid(v, u), u);
+				int nextCent = getCentroid(v, u);
+				cent[e] = nextCent;
+				centroidTree(nextCent, u);
 			}
 		}
 	}
 
-	public static int add(int jobi, int jobv, int l, int r, int i) {
-		if (i == 0) {
-			i = ++cntt;
+	public static void add(int x, int v) {
+		sum[x] += v;
+		for (int cur = x, fa = centfa[cur]; fa > 0; cur = fa, fa = centfa[cur]) {
+			int dist = getDist(x, fa);
+			sum[fa] += v;
+			addCost[fa] += 1L * v * dist;
+			minusCost[cur] += 1L * v * dist;
 		}
-		if (l == r) {
-			sum[i] += jobv;
-		} else {
-			int mid = (l + r) >> 1;
-			if (jobi <= mid) {
-				ls[i] = add(jobi, jobv, l, mid, ls[i]);
-			} else {
-				rs[i] = add(jobi, jobv, mid + 1, r, rs[i]);
-			}
-			sum[i] = sum[ls[i]] + sum[rs[i]];
-		}
-		return i;
 	}
 
-	public static int query(int jobl, int jobr, int l, int r, int i) {
-		if (i == 0) {
-			return 0;
-		}
-		if (jobl <= l && r <= jobr) {
-			return sum[i];
-		}
-		int mid = (l + r) >> 1;
-		int ans = 0;
-		if (jobl <= mid) {
-			ans += query(jobl, jobr, l, mid, ls[i]);
-		}
-		if (jobr > mid) {
-			ans += query(jobl, jobr, mid + 1, r, rs[i]);
+	public static long query(int x) {
+		long ans = addCost[x];
+		for (int cur = x, fa = centfa[cur]; fa > 0; cur = fa, fa = centfa[cur]) {
+			int dist = getDist(x, fa);
+			ans += addCost[fa];
+			ans -= minusCost[cur];
+			ans += (sum[fa] - sum[cur]) * dist;
 		}
 		return ans;
 	}
 
-	public static void add(int x, int v) {
-		addTree[x] = add(0, v, 0, n - 1, addTree[x]);
-		for (int cur = x, fa = centfa[cur]; fa > 0; cur = fa, fa = centfa[cur]) {
-			int dist = getDist(x, fa);
-			addTree[fa] = add(dist, v, 0, n - 1, addTree[fa]);
-			minusTree[cur] = add(dist, v, 0, n - 1, minusTree[cur]);
-		}
-	}
-
-	public static int query(int x, int k) {
-		int ans = query(0, k, 0, n - 1, addTree[x]);
-		for (int cur = x, fa = centfa[cur]; fa > 0; cur = fa, fa = centfa[cur]) {
-			int dist = getDist(x, fa);
-			if (k - dist >= 0) {
-				ans += query(0, k - dist, 0, n - 1, addTree[fa]);
-				ans -= query(0, k - dist, 0, n - 1, minusTree[cur]);
+	public static long compute(int u) {
+		long ans = query(u);
+		for (int e = head[u]; e > 0; e = nxt[e]) {
+			int v = to[e];
+			if (query(v) < ans) {
+				return compute(cent[e]);
 			}
 		}
 		return ans;
@@ -320,37 +297,24 @@ public class Code01_Wave1 {
 		PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
 		n = in.nextInt();
 		m = in.nextInt();
-		for (int i = 1; i <= n; i++) {
-			arr[i] = in.nextInt();
-		}
-		for (int i = 1, u, v; i < n; i++) {
+		for (int i = 1, u, v, w; i < n; i++) {
 			u = in.nextInt();
 			v = in.nextInt();
-			addEdge(u, v);
-			addEdge(v, u);
+			w = in.nextInt();
+			addEdge(u, v, w);
+			addEdge(v, u, w);
 		}
-		// dfs1(1, 0);
+		// dfs1(1, 0, 0);
 		// dfs2(1, 1);
-		dfs3(1, 0);
+		dfs3(1, 0, 0);
 		dfs4(1, 1);
-		centroidTree(getCentroid(1, 0), 0);
-		for (int i = 1; i <= n; i++) {
-			add(i, arr[i]);
-		}
-		int lastAns = 0;
-		for (int i = 1, op, x, y; i <= m; i++) {
-			op = in.nextInt();
+		int root = getCentroid(1, 0);
+		centroidTree(root, 0);
+		for (int i = 1, x, v; i <= m; i++) {
 			x = in.nextInt();
-			y = in.nextInt();
-			x ^= lastAns;
-			y ^= lastAns;
-			if (op == 0) {
-				lastAns = query(x, y);
-				out.println(lastAns);
-			} else {
-				add(x, y - arr[x]);
-				arr[x] = y;
-			}
+			v = in.nextInt();
+			add(x, v);
+			out.println(compute(root));
 		}
 		out.flush();
 		out.close();
