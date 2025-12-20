@@ -26,10 +26,11 @@ public class PartitionList {
 		public static ListNode partition(ListNode head, int x) {
 			ListNode leftHead = null, leftTail = null; // < x的区域
 			ListNode rightHead = null, rightTail = null; // >=x的区域
-			ListNode next = null;
+			ListNode next = null; // 用于原来链表的指针走向
 			while (head != null) {
 				next = head.next;
-				head.next = null;
+				// 切断next指针，即指向null，是将当前元素独立出来，因为还有head指针指向，所以并非僵尸节点，不会被jvm给回收
+				head.next = null; 
 				if (head.val < x) {
 					if (leftHead == null) {
 						leftHead = head;
@@ -50,7 +51,9 @@ public class PartitionList {
 			if (leftHead == null) {
 				return rightHead;
 			}
-			// < x的区域有内容！
+			// < x的区域有内容！这个语句包含了两种场景，一种是右侧区域有值，一种是右侧区域没有值。
+			// 当右侧大于x的区域为null时，用leftTail.next指向null
+			// 作为尾结点的指向也是正确的操作
 			leftTail.next = rightHead;
 			return leftHead;
 		}
