@@ -70,8 +70,9 @@ public class QueueStackAndCircularQueue {
 			return queue[l++];
 		}
 		// ?
-		// l...r-1 r
-		// [l..r)
+		// l...r-1 r 
+		// r是新数据进来的位置，默认是queue[r]=0，非真正队尾的数据queue[r-1]才是队列的尾部
+		// [l..r) 左闭右开
 		public int head() {
 			return queue[l];
 		}
@@ -131,6 +132,8 @@ public class QueueStackAndCircularQueue {
 		}
 
 		// 调用任何方法之前，先调用这个方法来判断栈内是否有东西
+		// 加入x数，放在size位置，然后size++
+		// 弹出x时，取size-1位置，然后再size--
 		public boolean isEmpty() {
 			return size == 0;
 		}
@@ -159,6 +162,12 @@ public class QueueStackAndCircularQueue {
 
 		public int[] queue;
 
+		// l与r互相追赶，相对位置不好确认，此时引入三方变量size
+		// 当size < limit时，加入x，放在r，r++，（前面这么做总是对的）达到终点时，重新置回0
+		// 当size > 0时，弹出x，取出l，l++(注意这里是++)（前面这么做总是对的），达到终点时，重新置回0
+
+		// 问题来了：怎么确认达到了终点，通过引入limit。如果l或r的值达到了limit，表示已满。
+		// 其实就是判断是不是为k，k是传入的，为了使用到这个k，引用了新变量limit
 		public int l, r, size, limit;
 
 		// 同时在队列里的数字个数，不要超过k
