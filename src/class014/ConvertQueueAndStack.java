@@ -32,6 +32,8 @@ public class ConvertQueueAndStack {
 			}
 		}
 
+		// 这里inToOut()方法视频中讲解的逻辑不太一样，首个元素会直接放在out中
+		// 将inToOut()方法去掉，则与视频中的逻辑一致，且当pop时，先清空in，保障了顺序
 		public void push(int x) {
 			in.push(x);
 			inToOut();
