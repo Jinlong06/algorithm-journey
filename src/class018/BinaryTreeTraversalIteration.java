@@ -45,6 +45,9 @@ public class BinaryTreeTraversalIteration {
 					stack.push(head);
 					head = head.left;
 				} else {
+					// 此时head节点已经过上面的赋值，置为null，
+					// 将取出的节点指向head，即从某个孩子转回原节点
+					// 直到这个分支了，说明某个节点的左树已经全部遍历完
 					head = stack.pop();
 					System.out.print(head.val + " ");
 					head = head.right;
