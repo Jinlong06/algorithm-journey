@@ -1,6 +1,10 @@
-package class186;
+package class187;
 
 // 最长道路tree，java版
+// 一共n个节点，每个点给定点权，给定n-1条边，所有节点组成一棵树
+// 树上任何一条链的指标 = 链的节点数 * 链上节点的最小值
+// 打印这个指标的最大值
+// 1 <= n <= 5 * 10^4
 // 测试链接 : https://hydro.ac/p/bzoj-P2870
 // 测试链接 : https://darkbzoj.cc/problem/2870
 // 提交以下的code，提交时请把类名改成"Main"，可以通过所有测试用例
@@ -12,22 +16,21 @@ import java.io.PrintWriter;
 
 public class Code01_LongestPathTree1 {
 
-	public static int MAXN = 200001;
-	public static int MAXM = 1000001;
+	public static int MAXN = 100001;
 	public static int n, cntn;
 	public static int[] arr = new int[MAXN];
 
-	public static int[] headg = new int[MAXN];
-	public static int[] nextg = new int[MAXN << 1];
-	public static int[] tog = new int[MAXN << 1];
-	public static int[] weightg = new int[MAXN << 1];
-	public static int cntg;
+	public static int[] head1 = new int[MAXN];
+	public static int[] next1 = new int[MAXN << 1];
+	public static int[] to1 = new int[MAXN << 1];
+	public static int[] weight1 = new int[MAXN << 1];
+	public static int cnt1;
 
-	public static int[] sonCnt = new int[MAXN];
-	public static int[] heads = new int[MAXN];
-	public static int[] nexts = new int[MAXM];
-	public static int[] sons = new int[MAXM];
-	public static int cnts;
+	public static int[] head2 = new int[MAXN];
+	public static int[] next2 = new int[MAXN << 1];
+	public static int[] to2 = new int[MAXN << 1];
+	public static int[] weight2 = new int[MAXN << 1];
+	public static int cnt2;
 
 	public static boolean[] vis = new boolean[MAXN];
 	public static int[] siz = new int[MAXN];
@@ -39,6 +42,8 @@ public class Code01_LongestPathTree1 {
 	public static int[] redge = new int[MAXN];
 	public static int[] rminv = new int[MAXN];
 	public static int cntr;
+
+	public static long ans;
 
 	// 讲解118，递归函数改成迭代所需要的栈
 	public static int[][] stack = new int[MAXN][6];
@@ -65,91 +70,81 @@ public class Code01_LongestPathTree1 {
 		e = stack[stacksize][5];
 	}
 
-	public static void addEdge(int u, int v, int w) {
-		nextg[++cntg] = headg[u];
-		tog[cntg] = v;
-		weightg[cntg] = w;
-		headg[u] = cntg;
+	public static void addEdge1(int u, int v, int w) {
+		next1[++cnt1] = head1[u];
+		to1[cnt1] = v;
+		weight1[cnt1] = w;
+		head1[u] = cnt1;
 	}
 
-	public static void addSon(int u, int v) {
-		sonCnt[u]++;
-		nexts[++cnts] = heads[u];
-		sons[cnts] = v;
-		heads[u] = cnts;
+	public static void addEdge2(int u, int v, int w) {
+		next2[++cnt2] = head2[u];
+		to2[cnt2] = v;
+		weight2[cnt2] = w;
+		head2[u] = cnt2;
 	}
 
-	// 生成孩子列表递归版，java会爆栈，C++可以通过
-	public static void buildSon1(int u, int fa) {
-		for (int e = headg[u]; e > 0; e = nextg[e]) {
-			int v = tog[e];
+	// 普通树进行三度化的重构递归版，java会爆栈，C++可以通过
+	public static void rebuild1(int u, int fa) {
+		int last = 0;
+		for (int e = head1[u]; e > 0; e = next1[e]) {
+			int v = to1[e];
+			int w = weight1[e];
 			if (v != fa) {
-				addSon(u, v);
-				buildSon1(v, u);
+				if (last == 0) {
+					last = u;
+					addEdge2(u, v, w);
+					addEdge2(v, u, w);
+				} else {
+					int add = ++cntn;
+					arr[add] = arr[u];
+					addEdge2(last, add, 0);
+					addEdge2(add, last, 0);
+					addEdge2(add, v, w);
+					addEdge2(v, add, w);
+					last = add;
+				}
+				rebuild1(v, u);
 			}
 		}
 	}
 
-	// buildSon1的迭代版
-	public static void buildSon2(int cur, int father) {
+	// rebuild1迭代版
+	public static void rebuild2(int cur, int fa) {
 		stacksize = 0;
-		push(cur, father, 0, 0, 0, -1);
+		push(cur, fa, 0, 0, 0, -1);
 		while (stacksize > 0) {
 			pop();
 			if (e == -1) {
-				for (int ei = headg[u]; ei > 0; ei = nextg[ei]) {
-					int v = tog[ei];
+				int last = 0;
+				for (int ei = head1[u]; ei > 0; ei = next1[ei]) {
+					int v = to1[ei];
+					int w = weight1[ei];
 					if (v != f) {
-						addSon(u, v);
+						if (last == 0) {
+							last = u;
+							addEdge2(u, v, w);
+							addEdge2(v, u, w);
+						} else {
+							int add = ++cntn;
+							arr[add] = arr[u];
+							addEdge2(last, add, 0);
+							addEdge2(add, last, 0);
+							addEdge2(add, v, w);
+							addEdge2(v, add, w);
+							last = add;
+						}
 					}
 				}
-				e = headg[u];
+				e = head1[u];
 			} else {
-				e = nextg[e];
+				e = next1[e];
 			}
 			if (e != 0) {
 				push(u, f, 0, 0, 0, e);
-				int v = tog[e];
+				int v = to1[e];
 				if (v != f) {
 					push(v, u, 0, 0, 0, -1);
-				}
-			}
-		}
-	}
-
-	public static void rebuildTree() {
-		// buildSon1(1, 0);
-		buildSon2(1, 0);
-		cntn = n;
-		cntg = 1;
-		for (int u = 1; u <= cntn; u++) {
-			headg[u] = 0;
-		}
-		for (int u = 1; u <= cntn; u++) {
-			if (sonCnt[u] <= 2) {
-				for (int e = heads[u]; e > 0; e = nexts[e]) {
-					int son = sons[e];
-					addEdge(u, son, 1);
-					addEdge(son, u, 1);
-				}
-			} else {
-				int node1 = ++cntn;
-				int node2 = ++cntn;
-				arr[node1] = arr[u];
-				arr[node2] = arr[u];
-				addEdge(u, node1, 0);
-				addEdge(node1, u, 0);
-				addEdge(u, node2, 0);
-				addEdge(node2, u, 0);
-				boolean add1 = true;
-				for (int e = heads[u]; e > 0; e = nexts[e]) {
-					int son = sons[e];
-					if (add1) {
-						addSon(node1, son);
-					} else {
-						addSon(node2, son);
-					}
-					add1 = !add1;
 				}
 			}
 		}
@@ -158,8 +153,8 @@ public class Code01_LongestPathTree1 {
 	// 得到子树大小递归版，java会爆栈，C++可以通过
 	public static void getSize1(int u, int fa) {
 		siz[u] = 1;
-		for (int e = headg[u]; e > 0; e = nextg[e]) {
-			int v = tog[e];
+		for (int e = head2[u]; e > 0; e = next2[e]) {
+			int v = to2[e];
 			if (v != fa && !vis[e >> 1]) {
 				getSize1(v, u);
 				siz[u] += siz[v];
@@ -175,19 +170,19 @@ public class Code01_LongestPathTree1 {
 			pop();
 			if (e == -1) {
 				siz[u] = 1;
-				e = headg[u];
+				e = head2[u];
 			} else {
-				e = nextg[e];
+				e = next2[e];
 			}
 			if (e != 0) {
 				push(u, f, 0, 0, 0, e);
-				int v = tog[e];
+				int v = to2[e];
 				if (v != f && !vis[e >> 1]) {
 					push(v, u, 0, 0, 0, -1);
 				}
 			} else {
-				for (int ei = headg[u]; ei > 0; ei = nextg[ei]) {
-					int v = tog[ei];
+				for (int ei = head2[u]; ei > 0; ei = next2[ei]) {
+					int v = to2[ei];
 					if (v != f && !vis[ei >> 1]) {
 						siz[u] += siz[v];
 					}
@@ -196,28 +191,35 @@ public class Code01_LongestPathTree1 {
 		}
 	}
 
+	// 找寻重心边，重心边的序号返回
 	public static int getCentroidEdge(int u, int fa) {
 		// getSize1(u, fa);
 		getSize2(u, fa);
 		int total = siz[u];
-		int edge = 0;
-		int best = total;
-		while (u > 0) {
-			int nextu = 0, nextfa = 0;
-			for (int e = headg[u]; e > 0; e = nextg[e]) {
-				int v = tog[e];
-				if (v != fa && !vis[e >> 1]) {
-					int cur = Math.max(total - siz[v], siz[v]);
-					if (cur < best) {
-						edge = e;
-						best = cur;
-						nextfa = u;
-						nextu = v;
-					}
+		int half = total >> 1;
+		boolean find = false;
+		while (!find) {
+			find = true;
+			for (int e = head2[u]; e > 0; e = next2[e]) {
+				int v = to2[e];
+				if (v != fa && !vis[e >> 1] && siz[v] > half) {
+					fa = u;
+					u = v;
+					find = false;
+					break;
 				}
 			}
-			fa = nextfa;
-			u = nextu;
+		}
+		int best = 0, edge = 0;
+		for (int e = head2[u]; e > 0; e = next2[e]) {
+			if (!vis[e >> 1]) {
+				int v = to2[e];
+				int sub = v == fa ? (total - siz[u]) : siz[v];
+				if (sub > best) {
+					best = sub;
+					edge = e;
+				}
+			}
 		}
 		return edge;
 	}
@@ -231,10 +233,10 @@ public class Code01_LongestPathTree1 {
 			redge[++cntr] = edge;
 			rminv[cntr] = minv;
 		}
-		for (int e = headg[u]; e > 0; e = nextg[e]) {
-			int v = tog[e];
+		for (int e = head2[u]; e > 0; e = next2[e]) {
+			int v = to2[e];
 			if (v != fa && !vis[e >> 1]) {
-				dfs1(v, u, edge + weightg[e], Math.min(minv, arr[v]), op);
+				dfs1(v, u, edge + weight2[e], Math.min(minv, arr[v]), op);
 			}
 		}
 	}
@@ -253,15 +255,15 @@ public class Code01_LongestPathTree1 {
 					redge[++cntr] = edge;
 					rminv[cntr] = minv;
 				}
-				e = headg[u];
+				e = head2[u];
 			} else {
-				e = nextg[e];
+				e = next2[e];
 			}
 			if (e != 0) {
 				push(u, f, edge, minv, op, e);
-				int v = tog[e];
+				int v = to2[e];
 				if (v != f && !vis[e >> 1]) {
-					push(v, u, edge + weightg[e], Math.min(minv, arr[v]), op, -1);
+					push(v, u, edge + weight2[e], Math.min(minv, arr[v]), op, -1);
 				}
 			}
 		}
@@ -285,50 +287,46 @@ public class Code01_LongestPathTree1 {
 		sort(edge, minv, i, r);
 	}
 
-	public static long calc(int edge) {
+	public static void calc(int edge) {
 		cntl = cntr = 0;
-		int v = tog[edge];
-		// dfs1(v, 0, 0, arr[v], 0);
-		dfs2(v, 0, 0, arr[v], 0);
-		v = tog[edge ^ 1];
-		// dfs1(v, 0, 0, arr[v], 1);
-		dfs2(v, 0, 0, arr[v], 1);
+		int v1 = to2[edge];
+		int v2 = to2[edge ^ 1];
+		// dfs1(v1, 0, 0, arr[v1], 0);
+		// dfs1(v2, 0, weight2[edge], arr[v2], 1);
+		dfs2(v1, 0, 0, arr[v1], 0);
+		dfs2(v2, 0, weight2[edge], arr[v2], 1);
 		sort(ledge, lminv, 1, cntl);
 		sort(redge, rminv, 1, cntr);
-		long ans = 0;
 		long maxEdge = 0;
-		for (int i = cntr, j = cntl; i >= 1; i--) {
-			while (j >= 1 && lminv[j] >= rminv[i]) {
-				maxEdge = Math.max(maxEdge, ledge[j]);
-				j--;
-			}
-			if (j < cntl) {
-				ans = Math.max(ans, 1L * rminv[i] * (maxEdge + redge[i] + weightg[edge] + 1));
-			}
-		}
-		maxEdge = 0;
 		for (int i = cntl, j = cntr; i >= 1; i--) {
 			while (j >= 1 && rminv[j] >= lminv[i]) {
 				maxEdge = Math.max(maxEdge, redge[j]);
 				j--;
 			}
 			if (j < cntr) {
-				ans = Math.max(ans, 1L * lminv[i] * (maxEdge + ledge[i] + weightg[edge] + 1));
+				ans = Math.max(ans, 1L * lminv[i] * (maxEdge + ledge[i] + 1));
 			}
 		}
-		return ans;
+		maxEdge = 0;
+		for (int i = cntr, j = cntl; i >= 1; i--) {
+			while (j >= 1 && lminv[j] >= rminv[i]) {
+				maxEdge = Math.max(maxEdge, ledge[j]);
+				j--;
+			}
+			if (j < cntl) {
+				ans = Math.max(ans, 1L * rminv[i] * (maxEdge + redge[i] + 1));
+			}
+		}
 	}
 
-	public static long solve(int u) {
-		long ans = 0;
+	public static void solve(int u) {
 		int edge = getCentroidEdge(u, 0);
 		if (edge > 0) {
 			vis[edge >> 1] = true;
-			ans = calc(edge);
-			ans = Math.max(ans, solve(tog[edge]));
-			ans = Math.max(ans, solve(tog[edge ^ 1]));
+			calc(edge);
+			solve(to2[edge]);
+			solve(to2[edge ^ 1]);
 		}
-		return ans;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -341,11 +339,14 @@ public class Code01_LongestPathTree1 {
 		for (int i = 1, u, v; i < n; i++) {
 			u = in.nextInt();
 			v = in.nextInt();
-			addEdge(u, v, 1);
-			addEdge(v, u, 1);
+			addEdge1(u, v, 1);
+			addEdge1(v, u, 1);
 		}
-		rebuildTree();
-		long ans = solve(1);
+		cntn = n;
+		cnt2 = 1;
+		// rebuild1(1, 0);
+		rebuild2(1, 0);
+		solve(1);
 		out.println(ans);
 		out.flush();
 		out.close();
