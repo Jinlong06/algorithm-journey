@@ -100,6 +100,12 @@ public class Code01_QuickSort {
 		int right = last;
 		quickSort2(l, left - 1);
 		quickSort2(right + 1, r);
+		//这里为什么要用left与right,而不是直接使用first与last
+		// quickSort2(l, first - 1);
+		// quickSort2(last + 1, r);
+		// 因为这两个全局变量在之前的过程中，可能被覆盖，不在是你设置的那个值。
+		// 针对这种全量变量,在递归使用时，如果可能被修改，那么要在每次递归函数调用前，用临时变量在外层进行赋值。
+		// 如果不会被修改，那么可以直接使用。
 	}
 
 	// 荷兰国旗问题
